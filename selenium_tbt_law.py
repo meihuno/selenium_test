@@ -71,7 +71,57 @@ class TBTPdfDownLoader():
         if len(self.doc_dict) > 0:
             with open('./temp/doc_dict.json', 'w') as f:
                 json.dump(self.doc_dict, f, indent=4)
-    
+
+
+    def open_window(self, wlink):
+        wait = WebDriverWait(self.browser, 15)
+        wlink.click()
+        wait.until(lambda d: len(self.browser.window_handles) > 1)
+        self.browser.switch_to.window(self.browser.window_handles[1])
+        wait.until(EC.presence_of_all_elements_located)
+        current_url = self.browser.current_url
+        # sleep(5)
+        # print('waiting 5')
+        self.browser.close()
+        self.browser.switch_to.window(self.browser.window_handles[0])
+        # sleep(5)
+        # print('waiting 10')
+        return current_url
+        
+    def link_loop_test(self, set_dict, count):
+        # html.t-ff.t-ff99 body form#aspnetForm div#ctl00_PanelMaster table tbody tr td div#body div#contentPlaceHolder table tbody tr td div#searchResults table#ctl00_MainPlaceHolder_tableFooter tbody tr td a#ctl00_MainPlaceHolder_lnkNext
+        wait = WebDriverWait(self.browser, 15)
+        wait.until(EC.presence_of_all_elements_located)
+        print(["in", count])
+        sleep(5)
+
+        divs = self.browser.find_elements(By.CLASS_NAME, 'hitContainer')
+        for div in divs:
+            symbol = div.find_element(By.CLASS_NAME, 'hitSymbol')
+            symbolstr = symbol.text
+            symbolstr = symbolstr.replace(' ', '')
+            wlinks = div.find_elements(By.CLASS_NAME, 'FECatalogueSymbolPreviewCss')
+            if not symbolstr in set_dict:
+                set_dict[symbolstr] = []
+
+            if len(wlinks) > 0:
+                wlink = wlinks[0]
+                # curl = self.open_window(wlink)
+                # set_dict[symbolstr].append(curl)
+                set_dict[symbolstr].append("link")
+            else:
+                set_dict[symbolstr].append("no link")
+                
+        next_links = self.browser.find_elements(By.ID, 'ctl00_MainPlaceHolder_lnkNext')
+        if len(next_links) > 0:
+            next_link = None
+            next_link = next_links[0]
+            # print([next_link.get_attribute('innerHTML'), next_link.get_attribute('disabled')])
+            print([next_link.text, next_link.is_enabled(), next_link])
+            if next_link.get_attribute('disabled') is None:
+                next_link.click()
+                count += 1
+                self.link_loop_test(set_dict, count)
 
     def get_pdf2(self):
 
@@ -84,28 +134,41 @@ class TBTPdfDownLoader():
         
         print("start")
         
-        try:
-
+        # try:
+        if 1 == 1:
             wait.until(EC.presence_of_all_elements_located)
             div = self.browser.find_element(By.ID, 'ctl00_MainPlaceHolder_DatePickerWUC1_txtCalendar_wrapper')
             # texts = div.find_element(By.ID, 'ctl00_MainPlaceHolder_DatePickerWUC1_txtCalendar')
             # ctl00_MainPlaceHolder_DatePickerWUC1_txtCalendar_dateInput
+
             texts = div.find_element(By.ID, 'ctl00_MainPlaceHolder_DatePickerWUC1_txtCalendar_dateInput')
             print("elem")
             print([texts])
-            print([texts.get_attribute('innerHTML')])
+            # print([texts.get_attribute('innerHTML')])
             # div.click()
             print("gogo")
             texts.click()
             texts.clear()
-            texts.send_keys('19/06/2022')
+            texts.send_keys('07/03/2022')
+
+            div = self.browser.find_element(By.ID, 'ctl00_MainPlaceHolder_DatePickerWUC2_txtCalendar_wrapper')
+            texts = div.find_element(By.ID, 'ctl00_MainPlaceHolder_DatePickerWUC2_txtCalendar_dateInput')
+            print("elem")
+            print([texts])
+            # print([texts.get_attribute('innerHTML')])
+            # div.click()
+            print("gogo")
+            texts.click()
+            texts.clear()
+            texts.send_keys('07/03/2022')
             print("gogo1")
-            """
-            check1 = self.browser.find_element(By.ID, 'ctl00_MainPlaceHolder_chk0009')
+            
+            check1 = self.browser.find_element(By.ID, 'ctl00_MainPlaceHolder_chk009')
             print(check1)
             print(check1.is_selected())
             check1.click()
             print(check1.is_selected())
+            """
             """
             
             check2 = self.browser.find_element(By.ID, 'ctl00_MainPlaceHolder_chk0010')
@@ -123,6 +186,15 @@ class TBTPdfDownLoader():
             
             sbutton = self.browser.find_element(By.ID, 'ctl00_MainPlaceHolder_btn011')
             sbutton.click()
+            wait.until(EC.presence_of_all_elements_located)
+
+            count = 0
+            set_dict = {}
+            self.link_loop_test(set_dict, count)
+
+            pp.pprint(len(set_dict))
+            for k,v in set_dict.items():
+                print([k,v])
             
             # dbutton = self.browser.find_element(By.ID, 'ctl00_MainPlaceHolder_btn012')
             # dbutton.click()
@@ -144,9 +216,9 @@ class TBTPdfDownLoader():
             # sleep(3)
             # texts.clear()
             # texts.send_keys(self.date)
-
-        except Exception as e:
-            print(e)
+        else:
+        #except Exception as e:
+            print(str(e))
             self.browser.close()
             print("exit")
 
